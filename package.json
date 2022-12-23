@@ -1,0 +1,13 @@
+{
+    "name": "fifo-task-manager",
+    "version": "0.0.1",
+    "main": "index.ts",
+    "scripts": {
+        "dev": "tsx --watch src/index.ts"
+    },
+    "devDependencies": {
+        "@types/node": "^18.11.17",
+        "tsx": "^3.12.1",
+        "typescript": "^4.9.4"
+    }
+}

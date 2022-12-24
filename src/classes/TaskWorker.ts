@@ -1,10 +1,34 @@
 import { MessagePort } from "worker_threads"
 import { Task, TaskManagerDataType, TaskWorkerDataType } from "../types"
 
-export class TaskWorker<T extends Task> {
+/**
+ * Task worker class for rappresenti a worker that executes a task
+ */
+export default class TaskWorker<T extends Task> {
+    /**
+     * task to run
+     *
+     * @private
+     * @type {T}
+     * @memberof TaskWorker
+     */
     private task: T
+
+    /**
+     * mark the worker as stopped or use this variable to stop the loop for executing the task
+     *
+     * @private
+     * @type {boolean}
+     * @memberof TaskWorker
+     */
     private stopped: boolean = false
 
+    /**
+     *
+     * @param parentPort used to communicate with task manager
+     * @param task task to execute
+     * @param threadId unique identifier for the worker
+     */
     constructor(
         private parentPort: MessagePort,
         task: T,
@@ -16,7 +40,8 @@ export class TaskWorker<T extends Task> {
     }
 
     /**
-     * init the worker, add listeners for TaskManager
+     * listen for task manager's signals
+     * @param taskManagerData data from task manager
      */
     private listener(taskManagerData: TaskManagerDataType<T>) {
         const { command, message } = taskManagerData
@@ -30,16 +55,23 @@ export class TaskWorker<T extends Task> {
         } else console.log(`message from TaskManager: ${message}`)
     }
 
-    public init() {
+    /**
+     * start listening messages from main thread (task manager)
+     */
+    public startListening() {
         this.parentPort.on("message", (data) => this.listener(data))
     }
 
+    /**
+     * Notify task manager with a signal
+     * @param data data to send to task manager
+     */
     private notifyTaskManager(data: TaskWorkerDataType) {
         this.parentPort.postMessage(data)
     }
 
     /**
-     * doTask
+     * run task until receiving "stop" signal from task manager
      */
     public async doTask() {
         let repeat = true

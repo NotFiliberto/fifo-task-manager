@@ -1,6 +1,11 @@
-import { Task } from "./Task"
+import Task from "./Task"
 
-export class CustomTask extends Task {
+/**
+ * Custom task, just extend Task abstract class and override run method
+ *
+ * you can store data in task.data with task.setData() and this will be passed to worker and
+ */
+export default class CustomTask extends Task {
     constructor(data?: any) {
         super(data)
     }

@@ -1,4 +1,4 @@
-export abstract class Task {
+export default abstract class Task {
     protected data: any
 
     constructor(data?: any) {

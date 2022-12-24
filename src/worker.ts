@@ -1,6 +1,5 @@
 import { parentPort, MessagePort, workerData, threadId } from "worker_threads"
-import { TaskWorker } from "./classes"
-import { CustomTask } from "./types"
+import { TaskWorker, CustomTask } from "./classes"
 
 async function main() {
     const { data, command } = workerData //receveid when the thread is created
@@ -13,8 +12,11 @@ async function main() {
             new CustomTask(data), //TODO add constructor props received from workerData
             threadId
         )
-        taskWorker.init()
-        taskWorker.doTask()
+        taskWorker.startListening()
+        await taskWorker.doTask()
+
+        //will not be executed if you terminate the worker with worker.terminate() from main thread
+        console.log("ok")
     }
 }
 

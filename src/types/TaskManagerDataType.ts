@@ -1,4 +1,4 @@
-import { Task } from "./Task"
+import { Task } from "../classes/Task"
 
 export type TaskManagerDataType<T extends Task> = {
     command: "start" | "stop" | "freeze" | "swap_data" | "OTHER_CUSTOM_COMMAND"

@@ -1,3 +1,6 @@
+/**
+ * Queue with FIFO policy
+ */
 export default class Queue<T> {
     private items: T[] = []
 

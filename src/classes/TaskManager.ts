@@ -1,21 +1,60 @@
 import { Worker } from "worker_threads"
 import Queue from "./Queue"
-import { Task, TaskManagerDataType, TaskWorkerDataType } from "../types"
+import {
+    ActiveTask,
+    Task,
+    TaskManagerDataType,
+    TaskWorkerDataType,
+} from "../types"
 
-export class ActiveTask<T, W> {
-    constructor(public task: T, public worker: W) {}
-}
-
-export class TaskManager<T extends Task> {
-    // static data
+/**
+ * Task manager class for custom task execution in parallel
+ */
+export default class TaskManager<T extends Task> {
+    /**
+     * maximum number of concurrent tasks
+     *
+     * @private
+     * @type {string}
+     * @memberof TaskManager
+     */
     private workerPath: string = "./worker.ts"
+
+    /**
+     * max simultaneusly
+     *
+     * @private
+     * @type {number}
+     * @memberof TaskManager
+     */
     private capacity: number = 2 //default
 
+    /**
+     * active tasks queue, we assume that the first element is always the oldest, so we add new task at the end  ofthe queue and we extract from the head the oldest (FIFO strategy)
+     *
+     * @private
+     * @type {Queue<ActiveTask<T, Worker>>}
+     * @memberof TaskManager
+     */
     private active: Queue<ActiveTask<T, Worker>> = new Queue<
         ActiveTask<T, Worker>
     >()
+
+    /**
+     * waiting task queue we assume that the first element is always the oldest, so we add new task at the end of the queue and we extract from the head the oldest (FIFO strategy)
+     *
+     * @private
+     * @type {Queue<T>}
+     * @memberof TaskManager
+     */
     private waiting: Queue<T> = new Queue<T>()
 
+    /**
+     *
+     * @param workerPath custom path for worker
+     * @param capacity maximum number of concurrent tasks
+     * @param tasks initial tasks to run
+     */
     constructor(workerPath: string, capacity: number, tasks?: T[]) {
         this.workerPath = workerPath
         this.capacity = capacity
@@ -26,7 +65,8 @@ export class TaskManager<T extends Task> {
     }
 
     /**
-     * init, initialize TaskManager with all task provided in the constructor fill up active
+     * start tasks provided to the function following the constraints
+     * @param tasks tasks to run
      */
     private async init(tasks?: T[]) {
         if (tasks) {
@@ -35,6 +75,10 @@ export class TaskManager<T extends Task> {
         }
     }
 
+    /**
+     * Add task to active task list if number of active tasks is less than capacity
+     * @param task task to add
+     */
     public addTask(task: T) {
         if (this.active.getSize() < this.capacity) {
             /* this.active.push(task)
@@ -47,13 +91,11 @@ export class TaskManager<T extends Task> {
         }
     }
 
+    /**
+     * Stop the first worker if it has finished his job and there are tasks in waiting list
+     * @param taskWorkerData data received from worker
+     */
     private async handleWorkDone(taskWorkerData: TaskWorkerDataType) {
-        /* 
-        waiting piena ? freeza il job corrente, dovrei prendere i dati dal worker che potrebbero essere stati modificati e salvari qui mettendo il job nella waiting con i nuovi dati
-
-        per freezzarlo prima devo dirgli che lo voglio freezzare, perchè magari ha ricominciato la sua esecuzione
-        
-        */
         const { threadId } = taskWorkerData
 
         if (this.waiting.getSize() > 0) {
@@ -67,6 +109,23 @@ export class TaskManager<T extends Task> {
         }
     }
 
+    /**
+     * Send data and commands to worker
+     * @param worker worker where send data too
+     * @param data data to send to worker
+     */
+    private sendDataToWorker(worker: Worker, data: TaskManagerDataType<T>) {
+        worker.postMessage(data)
+    }
+
+    /**
+     * Send command to worker
+     *
+     * general method to wrap functions
+     *
+     * @param worker thread where to send command
+     * @param command command to send (you can edit the list from TaskManagerDataType type in tyypes folder)
+     */
     private sendCommand(
         worker: Worker,
         command: Pick<TaskManagerDataType<T>, "command">["command"]
@@ -74,7 +133,11 @@ export class TaskManager<T extends Task> {
         this.sendDataToWorker(worker, { command })
     }
 
-    public async stopWorker(worker: Worker) {
+    /**
+     * send signal "stop" to worker thread for stopping it
+     * @param worker worker to stop
+     */
+    private async stopWorker(worker: Worker) {
         this.sendCommand(worker, "stop")
     }
 
@@ -88,7 +151,7 @@ export class TaskManager<T extends Task> {
         const oldestActiveTask = this.active.peek()
 
         if (threadId === oldestActiveTask.worker.threadId) {
-            const worker = oldestActiveTask.worker
+            let worker: Worker = oldestActiveTask.worker
             const stopped = await worker.terminate()
 
             if (stopped) {
@@ -124,35 +187,10 @@ export class TaskManager<T extends Task> {
         }
     }
 
-    /*     public async swapTask(workerIndex: number, task: T) {
-        const worker = this.workers.at(workerIndex)
-        if (worker === undefined) throw new Error("Undefined worker")
-
-        this.sendDataToWorker(worker, {
-            command: "swap_data",
-            data: task.getData(),
-            message: "wanna swap data!",
-        }) //send new data to worker
-
-        worker.on("DATA_SWAPPED", (taskWorkerData: TaskWorkerDataType) => {
-            this.handleDataSwapped(taskWorkerData)
-            console.log("zzz")
-        })
-
-        worker.off("DATA_SWAPPPED", () => {})
-    } */
-
-    /*     private async handleDataSwapped(taskWorkerData: TaskWorkerDataType) {
-        const { threadId, data } = taskWorkerData
-
-        const workerIndex = this.getWorkerIndexByThreadId(threadId)
-
-        const task = this.active.at(workerIndex)
-        if (task === undefined) throw new Error("Undefined task")
-
-        task.setData(data)
-    } */
-
+    /**
+     * listeners for workers
+     * @param taskWorkerData data received from worker
+     */
     private async workerListener(taskWorkerData: TaskWorkerDataType) {
         const { code, message, threadId } = taskWorkerData
 
@@ -167,25 +205,18 @@ export class TaskManager<T extends Task> {
         }
     }
 
-    private sendDataToWorker(worker: Worker, data: TaskManagerDataType<T>) {
-        worker.postMessage(data)
-    }
-
     /**
-     * Add and start worker doing specific task
+     * create a worker and run its task
      * @param task Custom Task to add in worker array
      */
     private createWorker(task: T) {
         // create new worker to execute task
         const workerData: TaskManagerDataType<T> = {
             command: "start",
-            data: task.getData(),
+            data: structuredClone(task.getData()),
         }
 
         const worker = new Worker(this.workerPath, { workerData })
-
-        // push to workers array
-        //this.workers.push(worker)
 
         console.log(
             `worker #${worker.threadId} created at ${new Date()

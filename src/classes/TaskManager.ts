@@ -14,7 +14,7 @@ export default class TaskManager<T extends Task> {
      * @type {string}
      * @memberof TaskManager
      */
-    private workerPath: string = path.resolve(__dirname, "./worker.ts")
+    private workerPath: string = path.resolve(__dirname, "./worker")
 
     /**
      * max simultaneusly

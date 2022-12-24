@@ -1,10 +1,10 @@
 {
     "name": "fifo-task-manager",
     "version": "0.0.1",
-    "main": "index.ts",
+    "main": "src/index.ts",
     "scripts": {
         "dev": "tsx --watch src/index.ts",
-        "dev-inspect-mem": "tsx --watch --inspect-brk src/index.ts"
+        "dev-inspect": "tsx --watch --inspect-brk src/index.ts"
     },
     "devDependencies": {
         "@types/node": "^18.11.17",

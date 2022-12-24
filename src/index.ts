@@ -2,7 +2,7 @@ import { TaskManager, CustomTask } from "./classes"
 import path from "path"
 
 async function main() {
-    const WORKER_PATH = path.resolve(__dirname, "./worker.ts")
+    const WORKER_PATH = path.resolve(__dirname, "./worker")
     const MAX_TASKS_IN_PARALLEL = 2
     const tasks = [
         new CustomTask("mario"),

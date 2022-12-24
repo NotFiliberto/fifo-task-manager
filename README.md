@@ -5,21 +5,21 @@ Task manager using FIFO policy for choosing tasks to run and node worker threads
 ## Installation
 
 ```bash
-    git clone NotFiliberto/fifo-task-manager #clone the example
-    cd fifo-task-manager
-    npm install #install dependecies
+git clone NotFiliberto/fifo-task-manager #clone the example
+cd fifo-task-manager
+npm install #install dependecies
 ```
 
 ## Run example
 
 ```bash
-    npm run dev
+npm run dev
 ```
 
 Or if you want to debug it with chrome nodejs inspector
 
 ```bash
-    npm run dev-inspect
+npm run dev-inspect
 ```
 
 ## How it works

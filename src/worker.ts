@@ -9,7 +9,7 @@ async function main() {
 
         const taskWorker = new TaskWorker<CustomTask>(
             parentPort as MessagePort,
-            new CustomTask(data), //TODO add constructor props received from workerData
+            new CustomTask(data),
             threadId
         )
         taskWorker.startListening()

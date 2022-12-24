@@ -1,11 +1,7 @@
 import { Worker } from "worker_threads"
-import Queue from "./Queue"
-import {
-    ActiveTask,
-    Task,
-    TaskManagerDataType,
-    TaskWorkerDataType,
-} from "../types"
+import { Queue, Task } from "../classes"
+import { ActiveTask, TaskManagerDataType, TaskWorkerDataType } from "../types"
+import path from "path"
 
 /**
  * Task manager class for custom task execution in parallel
@@ -18,7 +14,7 @@ export default class TaskManager<T extends Task> {
      * @type {string}
      * @memberof TaskManager
      */
-    private workerPath: string = "./worker.ts"
+    private workerPath: string = path.resolve(__dirname, "./worker.ts")
 
     /**
      * max simultaneusly

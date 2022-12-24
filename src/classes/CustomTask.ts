@@ -1,4 +1,4 @@
-import Task from "./Task"
+import { Task } from "../classes"
 
 /**
  * Custom task, just extend Task abstract class and override run method

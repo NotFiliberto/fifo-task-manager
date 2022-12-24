@@ -1,5 +1,6 @@
 import { MessagePort } from "worker_threads"
-import { Task, TaskManagerDataType, TaskWorkerDataType } from "../types"
+import { Task } from "../classes"
+import { TaskManagerDataType, TaskWorkerDataType } from "../types"
 
 /**
  * Task worker class for rappresenti a worker that executes a task

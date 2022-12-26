@@ -1,7 +1,7 @@
 /**
  * Generic task, you have to override run method, and if you need extra data during the execution save it in data property of Task class
  */
-export default abstract class Task {
+export default abstract class Task<T> {
     /**
      * Local data of the task
      *
@@ -9,15 +9,15 @@ export default abstract class Task {
      * @type {*}
      * @memberof Task
      */
-    protected data: any
+    protected data!: T
 
     /**
      * Deep recursive clone of data passed to the constructor
      * @param data data to store in the task
      */
-    constructor(data?: any) {
+    constructor(data?: T) {
         if (data) this.data = structuredClone(data)
-        else data = {}
+        else data = undefined
     }
 
     /**
@@ -32,7 +32,7 @@ export default abstract class Task {
      *
      * @param data data to store in the task
      */
-    public setData(data: any) {
+    public setData(data: T) {
         this.data = structuredClone(data)
     }
     /**
@@ -40,4 +40,13 @@ export default abstract class Task {
      * @param args any argouments to the funciont
      */
     abstract run(...args: any): any
+}
+
+/**
+ * Generic typesafe task wrapper to have data into task with types
+ */
+export abstract class GenericTypesafeTask<K> extends Task<K> {
+    constructor(data?: K) {
+        super(data)
+    }
 }

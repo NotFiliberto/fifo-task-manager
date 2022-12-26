@@ -1,11 +1,14 @@
 import { MessagePort } from "worker_threads"
-import { Task } from "../classes"
+import { GenericTypesafeTask } from "../classes"
 import { TaskManagerDataType, TaskWorkerDataType } from "../types"
 
 /**
  * Task worker class for rappresenti a worker that executes a task
  */
-export default class TaskWorker<T extends Task> {
+export default class TaskWorker<
+    T extends GenericTypesafeTask<TaskDataType>,
+    TaskDataType
+> {
     /**
      * task to run
      *
@@ -77,17 +80,12 @@ export default class TaskWorker<T extends Task> {
     public async doTask() {
         let repeat = true
         while (true && repeat) {
-            const n = await this.task.run(this.task.getData())
+            const data = this.task.getData()
+            await this.task.run({ ...data, threadId: this.threadId })
 
             repeat = repeat && !this.stopped
             this.notifyTaskManager({
                 code: "WORK_DONE",
-                message: `done! ${new Date()
-                    .toISOString()
-                    .slice(
-                        14,
-                        19
-                    )} waited for ${n} seconds --> ${this.task.getData()}`,
                 threadId: this.threadId,
                 data: this.task.getData(),
             })

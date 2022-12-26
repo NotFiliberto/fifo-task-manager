@@ -26,6 +26,8 @@ npm run dev-inspect
 
 The only thing that you need to do is create your custom Task (in this example we created CustomTask) extending abstract Task class and overriding it's run method.
 
+You can pass to this class a data type, so you can access the data inside the task in typesafety way.
+
 ```typescript
 /* 
     CustomTask.ts 
@@ -33,10 +35,12 @@ The only thing that you need to do is create your custom Task (in this example w
     this task will cause the assigned worker to wait for a random amount of time
 */
 
-import { Task } from "../classes"
+type CustomTaskDataType = {
+    name: string
+}
 
-export default class CustomTask extends Task {
-    constructor(data?: any) {
+export default class CustomTask extends GenericTypesafeTask<CustomTaskDataType> {
+    constructor(data?: CustomTaskDataType) {
         super(data)
     }
     private async asyncWork(seconds: number) {
@@ -47,15 +51,25 @@ export default class CustomTask extends Task {
     private getRandomNumber(min: number, max: number) {
         return Math.floor(Math.random() * (max - min + 1)) + min
     }
-    async run() {
+    async run({ threadId }: { threadId: number }) {
+        //you can pass everything here
+        const name = this.data.name //TYPESAFE
         const n = this.getRandomNumber(1, 10)
         await this.asyncWork(n) //wait for n seconds
+
+        console.log(
+            `[WORKER #${threadId}] done! ${new Date()
+                .toISOString()
+                .slice(14, 19)} waited for ${n} seconds --> ${
+                this.getData().name
+            }`
+        )
         return n
     }
 }
 ```
 
-Then you have to import your custom task in the worker file and create a new TaskWorker instance like this
+Then you have to import your custom task and your custom task data type in the worker file and create a new TaskWorker instance like this
 
 ```typescript
 /* worker.ts */
@@ -63,18 +77,23 @@ Then you have to import your custom task in the worker file and create a new Tas
 import { parentPort, MessagePort, workerData, threadId } from "worker_threads"
 import { TaskWorker, CustomTask } from "./classes"
 
+type CustomTaskDataType = {
+    name: string
+}
+
 async function main() {
-    const { data, command } = workerData
+    const { data, command } = workerData //receveid when the thread is created
+
     if (command === "start") {
-        const taskWorker = new TaskWorker<CustomTask>(
+        const taskData = data as CustomTaskDataType
+
+        const taskWorker = new TaskWorker<CustomTask, CustomTaskDataType>(
             parentPort as MessagePort,
-            new CustomTask(data),
+            new CustomTask(taskData),
             threadId
         )
         taskWorker.startListening()
         await taskWorker.doTask()
-
-        console.log("ok")
     }
 }
 
@@ -93,21 +112,30 @@ example:
 /* index.ts */
 
 import { TaskManager, CustomTask } from "./classes"
+import { CustomTaskDataType } from "./types"
 import path from "path"
+
+type CustomTaskDataType = {
+    name: string
+}
 
 async function main() {
     const WORKER_PATH = path.resolve(__dirname, "./worker")
-    const MAX_TASKS_IN_PARALLEL = 2 //max 2 concurrent task at the same time
-    const tasks = [new CustomTask("mario"), new CustomTask("doccia")]
+    const MAX_TASKS_IN_PARALLEL = 2
+    const tasks = [
+        new CustomTask({ name: "mario" }), //CustomTaskDataType
+        new CustomTask({ name: "doccia" }),
 
-    const taskManager = new TaskManager<CustomTask>(
+    const taskManager = new TaskManager<CustomTask, CustomTaskDataType>(
         WORKER_PATH,
         MAX_TASKS_IN_PARALLEL,
         tasks
     )
 
-    // add new task after 11 seconds from starting the script
-    setTimeout(() => taskManager.addTask(new CustomTask("homyatol")), 11000)
+    setTimeout(
+        () => taskManager.addTask(new CustomTask({ name: "homyatol" })),
+        11000
+    ) //add new task after 11 secodns
 }
 
 main()

@@ -1,12 +1,15 @@
-import { Worker } from "worker_threads"
-import { Queue, Task } from "../classes"
-import { ActiveTask, TaskManagerDataType, TaskWorkerDataType } from "../types"
 import path from "path"
+import { Worker } from "worker_threads"
+import { Queue, GenericTypesafeTask } from "."
+import { ActiveTask, TaskManagerDataType, TaskWorkerDataType } from "../types"
 
 /**
  * Task manager class for custom task execution in parallel
  */
-export default class TaskManager<T extends Task> {
+export default class TaskManager<
+    T extends GenericTypesafeTask<TaskDataType>,
+    TaskDataType
+> {
     /**
      * maximum number of concurrent tasks
      *
@@ -195,7 +198,8 @@ export default class TaskManager<T extends Task> {
         }
 
         if (code !== "STOPPED" && code !== "STOPPING") {
-            console.log(`[MESSAGE from WORKER #${threadId}]: ${message}`) // show response from worker
+            if (message !== undefined)
+                console.log(`[MESSAGE from WORKER #${threadId}]: ${message}`) // show response from worker
 
             if (code === "WORK_DONE") this.handleWorkDone(taskWorkerData)
         }
@@ -227,5 +231,13 @@ export default class TaskManager<T extends Task> {
         )
 
         return worker
+    }
+
+    /**
+     * [TESTING METHOD] stop first worker
+     */
+    public async stopFirstWorker() {
+        const { worker } = this.active.peek()
+        await this.stopWorker(worker)
     }
 }

@@ -1,5 +1,6 @@
 import { parentPort, MessagePort, workerData, threadId } from "worker_threads"
 import { TaskWorker, CustomTask } from "./classes"
+import { CustomTaskDataType } from "./types"
 
 async function main() {
     const { data, command } = workerData //receveid when the thread is created
@@ -7,9 +8,11 @@ async function main() {
     if (command === "start") {
         //Object.setPrototypeOf(task, CustomTask.prototype) //NECESSARY when you want to create an object from scratch
 
-        const taskWorker = new TaskWorker<CustomTask>(
+        const taskData = data as CustomTaskDataType
+
+        const taskWorker = new TaskWorker<CustomTask, CustomTaskDataType>(
             parentPort as MessagePort,
-            new CustomTask(data),
+            new CustomTask(taskData),
             threadId
         )
         taskWorker.startListening()

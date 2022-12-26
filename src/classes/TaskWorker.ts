@@ -77,7 +77,7 @@ export default class TaskWorker<T extends Task> {
     public async doTask() {
         let repeat = true
         while (true && repeat) {
-            const n = await this.task.run()
+            const n = await this.task.run(this.task.getData())
 
             repeat = repeat && !this.stopped
             this.notifyTaskManager({

@@ -26,9 +26,10 @@ async function main() {
         () => taskManager.addTask(new CustomTask({ name: "homyatol" })),
         11000
     ) //send after 11 seconds
-    /* setTimeout(() => {
-        taskManager.stopFirstWorker()
-    }, 5000) */
+    setTimeout(() => {
+        console.log("STOPPING ALL WORKERS...")
+        taskManager.stopAllWorkersGracefully()
+    }, 30000) //stop all workers after gracefully
 }
 
 main()

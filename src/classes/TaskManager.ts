@@ -49,6 +49,15 @@ export default class TaskManager<
     private waiting: Queue<T> = new Queue<T>()
 
     /**
+     * used to stop task manager tasks execution
+     *
+     * @private
+     * @type {boolean}
+     * @memberof TaskManager
+     */
+    private stopTaskManger: boolean = false
+
+    /**
      *
      * @param workerPath custom path for worker
      * @param capacity maximum number of concurrent tasks
@@ -164,7 +173,7 @@ export default class TaskManager<
 
                 const removedActiveTask = this.active.dequeue() //remove oldest active task
 
-                if (removedActiveTask) {
+                if (removedActiveTask && !this.stopTaskManger) {
                     const { task: oldTask } = removedActiveTask
 
                     //waiting not empty
@@ -239,5 +248,14 @@ export default class TaskManager<
     public async stopFirstWorker() {
         const { worker } = this.active.peek()
         await this.stopWorker(worker)
+    }
+
+    /**
+     * stop all workers gracefully
+     *
+     * @memberof TaskManager
+     */
+    public async stopAllWorkersGracefully() {
+        this.stopTaskManger = true
     }
 }
